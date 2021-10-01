@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { ChakraProvider } from '@chakra-ui/react'
+import { Button, ChakraProvider } from '@chakra-ui/react'
 import TitleBar from './components/TitleBar'
 import PhotoContainer from './components/PhotoContainer'
 
