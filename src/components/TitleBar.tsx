@@ -2,9 +2,8 @@ import { FC } from 'react'
 
 import {
   Box,
-  Flex,
+  Center,
   IconButton,
-  Spacer,
   Text,
   useBreakpointValue,
   useColorMode,
@@ -17,14 +16,10 @@ const TitleBar: FC = () => {
 
   console.log(colorMode)
   return (
-    <Flex border="2px">
-      <Spacer />
+    <Center border="2px">
       <Box>
-        <Text fontSize="large" fontFamily="monospace">
-          Photos
-        </Text>
+        <Text>Photos</Text>
       </Box>
-      <Spacer />
       <Box>
         <IconButton
           aria-label="theme"
@@ -34,7 +29,7 @@ const TitleBar: FC = () => {
           size={iconBreakpoint}
         />
       </Box>
-    </Flex>
+    </Center>
   )
 }
 export default TitleBar

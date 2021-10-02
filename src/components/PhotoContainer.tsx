@@ -3,7 +3,7 @@ import {
   AspectRatio,
   Box,
   Button,
-  Flex,
+  Center,
   Image,
   Input,
   Modal,
@@ -13,17 +13,24 @@ import {
   ModalFooter,
   ModalOverlay,
   SimpleGrid,
+  Spinner,
+  Text,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react'
 import { Client } from 'minio'
 
-const PhotoContainer: FC = () => {
+export type PhotoContainerProps = {
+  albumName: string
+}
+
+const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
   const [image, selectImage] = useState('')
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
   const fileRef = useRef<any>()
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   const onClickWrapper = (image: string) => {
     selectImage(image)
@@ -42,28 +49,8 @@ const PhotoContainer: FC = () => {
     const file = fileRef!.current!.files[0]
     if (file === undefined) return
 
-    // KEEP
-    // alternative way
-    // minioClient.presignedPutObject(
-    //   'album',
-    //   file.name,
-    //   246060,
-    //   function (err, presignedUrl) {
-    //     if (err) return console.log(err)
-    //     console.log(presignedUrl)
-    //     fetch(presignedUrl, {
-    //       method: 'PUT',
-    //       headers: {
-    //         'Content-Type': file.type,
-    //       },
-    //       body: file,
-    //     }).then((e) => console.log(e))
-    //   }
-    // )
-
-    // better way
     minioClient.putObject(
-      'album',
+      albumName,
       file.name,
       Buffer.from(await new Response(file).arrayBuffer()),
       file.size,
@@ -78,23 +65,25 @@ const PhotoContainer: FC = () => {
             duration: 3000,
             isClosable: true,
           })
+        } else {
+          toast({
+            title: 'File uploaded successfully.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          })
         }
-        toast({
-          title: 'File uploaded successfully.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        })
       }
     )
     setTimeout(() => window.location.reload(), 5000)
   }
 
-  const stream = minioClient.listObjectsV2('album', '', true, '')
+  const stream = minioClient.listObjectsV2(albumName, '', true, '')
 
   useEffect(() => {
+    setImageUrls([])
     stream.on('data', (bucketItem) => {
-      minioClient.getObject('album', bucketItem.name, (error, dataStream) =>
+      minioClient.getObject(albumName, bucketItem.name, (error, dataStream) =>
         // @ts-ignore
         setImageUrls((url) => [...url, dataStream!.url])
       )
@@ -102,19 +91,33 @@ const PhotoContainer: FC = () => {
     stream.on('error', (err) => {
       console.log(err)
     })
-  }, [])
+  }, [albumName, fileRef])
 
   return (
     <>
-      <Flex alignItems="center">
-        <Button onClick={upload}>UPLOAD</Button>
-        <Input ref={fileRef} type="file" />
-      </Flex>
-      <SimpleGrid minChildWidth="200px" spacing="10px">
+      <Center>
+        <Box p="2">
+          <Input ref={fileRef} type="file" />
+        </Box>
+        <Box>
+          <Button onClick={upload}>UPLOAD</Button>
+        </Box>
+      </Center>
+      {!loaded ? (
+        <Center>
+          <Spinner />
+        </Center>
+      ) : null}
+      <SimpleGrid minChildWidth="200px" spacing="10px" p="2">
         {imageUrls.map((image: string, key: number) => {
           return (
             <AspectRatio key={key} onClick={() => onClickWrapper(image)}>
-              <Image src={image} objectFit="cover" />
+              <Image
+                src={image}
+                loading="eager"
+                onLoad={() => setLoaded(true)}
+                style={loaded ? {} : { display: 'none' }}
+              />
             </AspectRatio>
           )
         })}
