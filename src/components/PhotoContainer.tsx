@@ -1,10 +1,9 @@
 import { FC, useState, useRef, useEffect } from 'react'
 import {
-  AspectRatio,
   Box,
   Button,
   Center,
-  Image,
+  Image as ChakraImage,
   Input,
   Modal,
   ModalBody,
@@ -13,12 +12,11 @@ import {
   ModalFooter,
   ModalOverlay,
   SimpleGrid,
-  Spinner,
-  Text,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react'
 import { Client } from 'minio'
+import ImageComponent from './ImageComponent'
 
 export type PhotoContainerProps = {
   albumName: string
@@ -30,7 +28,7 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
   const toast = useToast()
   const fileRef = useRef<any>()
   const [imageUrls, setImageUrls] = useState<string[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [refresh, setRefresh] = useState({})
 
   const onClickWrapper = (image: string) => {
     selectImage(image)
@@ -38,8 +36,7 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
   }
 
   const minioClient = new Client({
-    endPoint: '192.168.1.17',
-    port: 9000,
+    endPoint: 'minio.justintomlin.us',
     useSSL: false,
     accessKey: 'justin',
     secretKey: 'password',
@@ -72,10 +69,10 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
             duration: 3000,
             isClosable: true,
           })
+          setRefresh({})
         }
       }
     )
-    setTimeout(() => window.location.reload(), 5000)
   }
 
   const stream = minioClient.listObjectsV2(albumName, '', true, '')
@@ -83,15 +80,15 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
   useEffect(() => {
     setImageUrls([])
     stream.on('data', (bucketItem) => {
-      minioClient.getObject(albumName, bucketItem.name, (error, dataStream) =>
+      minioClient.getObject(albumName, bucketItem.name, (error, dataStream) => {
         // @ts-ignore
         setImageUrls((url) => [...url, dataStream!.url])
-      )
+      })
     })
     stream.on('error', (err) => {
       console.log(err)
     })
-  }, [albumName, fileRef])
+  }, [albumName, refresh])
 
   return (
     <>
@@ -103,22 +100,12 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
           <Button onClick={upload}>UPLOAD</Button>
         </Box>
       </Center>
-      {!loaded ? (
-        <Center>
-          <Spinner />
-        </Center>
-      ) : null}
       <SimpleGrid minChildWidth="200px" spacing="10px" p="2">
         {imageUrls.map((image: string, key: number) => {
           return (
-            <AspectRatio key={key} onClick={() => onClickWrapper(image)}>
-              <Image
-                src={image}
-                loading="eager"
-                onLoad={() => setLoaded(true)}
-                style={loaded ? {} : { display: 'none' }}
-              />
-            </AspectRatio>
+            <Box key={key} onClick={() => onClickWrapper(image)}>
+              <ImageComponent url={image} />
+            </Box>
           )
         })}
       </SimpleGrid>
@@ -134,7 +121,7 @@ const PhotoContainer: FC<PhotoContainerProps> = ({ albumName }) => {
           <ModalCloseButton />
           <ModalBody onClick={onClose}>
             <Box paddingTop="500px">
-              <Image objectFit="fill" src={image} />
+              <ChakraImage objectFit="fill" src={image} />
             </Box>
           </ModalBody>
           <ModalFooter>

@@ -64,7 +64,9 @@ const AlbumController: FC<AlbumControllerProps> = ({
           </Drawer>
         </Box>
         <Box>
-          <Text>{'Showing Album: ' + albumName}</Text>
+          {albumName !== '' ? (
+            <Text>{'Showing Album: ' + albumName}</Text>
+          ) : null}
         </Box>
       </VStack>
     </Center>

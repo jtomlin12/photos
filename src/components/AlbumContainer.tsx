@@ -41,8 +41,7 @@ const AlbumContainer: FC<AlbumContainerProps> = ({
   }
 
   const minioClient = new Client({
-    endPoint: '192.168.1.17',
-    port: 9000,
+    endPoint: 'minio.justintomlin.us',
     useSSL: false,
     accessKey: 'justin',
     secretKey: 'password',

@@ -1,15 +1,12 @@
-FROM node:14-alpine
+# base image
+FROM node:12-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-
-COPY yarn.lock ./
-
-RUN yarn install --frozen-lockfile
-
+# dependencies
+COPY package*.json ./
+RUN yarn install
 COPY . .
 
-EXPOSE 3000
-
-CMD ["yarn", "start"]
+# run 'yarn run start' when the container starts
+CMD ["yarn", "run", "start"]
